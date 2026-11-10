@@ -9,6 +9,8 @@ public sealed class WorkshopHud : MonoBehaviour
     Label status, hint, players, title, details;
     Label[] stations, actors;
     Button[] buttons;
+    int observedOrders;
+    float orderNoticeUntil;
     public void Initialize(Graybox owner)
     {
         game = owner;
@@ -37,6 +39,7 @@ public sealed class WorkshopHud : MonoBehaviour
         top.style.backgroundColor = new Color(.08f, .13f, .15f, .96f);
         root.Add(top);
         status = Text(top, 24);
+        status.style.whiteSpace = WhiteSpace.Normal;
         hint = Text(top, 17);
         hint.style.color = new Color(.83f, .87f, .82f);
         bottom = new VisualElement();
@@ -144,8 +147,10 @@ public sealed class WorkshopHud : MonoBehaviour
         bool tutorial = r.Phase == RoundPhase.Tutorial;
         bool inWorld = game.Flow == null || game.Flow.WorldActive || game.Flow.LegacySmoke;
         top.style.display = bottom.style.display = inWorld ? DisplayStyle.Flex : DisplayStyle.None;
-        status.text = tutorial ? "交子赶工记 / 机制灰盒    教学 · 不计时" : $"订单 {r.Received}/{r.Required} 张    剩余 {Mathf.CeilToInt(r.Remaining)} 秒    已交 {r.Tickets} 张    完成 {r.Orders} 单    得分 {r.Score}";
-        hint.text = tutorial ? TutorialGuide.Instruction(r) : message;
+        if(tutorial || r.Orders<observedOrders){observedOrders=r.Orders;orderNoticeUntil=0;}
+        if(!tutorial && r.Orders>observedOrders){observedOrders=r.Orders;orderNoticeUntil=Time.time+4;}
+        status.text = tutorial ? "交子赶工记 / 机制灰盒    教学 · 不计时" : OrderFeedback.Summary(r);
+        hint.text = tutorial ? TutorialGuide.Instruction(r) : Time.time<orderNoticeUntil ? OrderFeedback.NewOrder(r) : message;
         players.text = $"P1：{Graybox.PaperName(r.Hands[0])}     |     P2：{Graybox.PaperName(r.Hands[1])}     |     " + message;
         for (int i = 0; i < stations.Length; i++)
         {
