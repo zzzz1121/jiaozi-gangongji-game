@@ -261,9 +261,10 @@ public sealed class GameFlow : MonoBehaviour
             1080,
             720
         };
-        int index = Mathf.Clamp(settings.resolution, 0, 2);
-        if (UnityEngine.Screen.width != w[index] || UnityEngine.Screen.height != h[index] || UnityEngine.Screen.fullScreen != settings.fullscreen)
-            UnityEngine.Screen.SetResolution(w[index], h[index], settings.fullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
+        var desktop=UnityEngine.Screen.currentResolution;
+        var target=DisplayPolicy.Resolution(settings,desktop.width,desktop.height);
+        if (UnityEngine.Screen.width != target.x || UnityEngine.Screen.height != target.y || UnityEngine.Screen.fullScreen != settings.fullscreen)
+            UnityEngine.Screen.SetResolution(target.x, target.y, settings.fullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
     }
 
     public string[] MenuItems()
@@ -318,7 +319,7 @@ public sealed class GameFlow : MonoBehaviour
                     $"总音量  {draft.master:P0}",
                     $"音乐  {draft.music:P0}",
                     $"音效  {draft.effects:P0}",
-                    "窗口尺寸  " + new[]
+                    "窗口尺寸（仅窗口模式）  " + new[]
                     {
                         "1280 × 800",
                         "1920 × 1080",

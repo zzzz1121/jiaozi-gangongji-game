@@ -58,7 +58,8 @@ public static class GrayboxBuild
     public static void Build()
     {
         Prepare();
-        var report = BuildPipeline.BuildPlayer(new[] { "Assets/Scenes/Graybox.unity" }, "Builds/Windows/JiaoziGraybox.exe", BuildTarget.StandaloneWindows64, BuildOptions.Development);
+        var directory=System.Environment.GetEnvironmentVariable("JIAOZI_BUILD_DIR")??"Builds/Windows";
+        var report = BuildPipeline.BuildPlayer(new[] { "Assets/Scenes/Graybox.unity" }, System.IO.Path.Combine(directory,"JiaoziGraybox.exe"), BuildTarget.StandaloneWindows64, BuildOptions.Development);
         if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
             throw new System.Exception("Build failed");
     }
