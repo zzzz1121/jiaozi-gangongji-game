@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d1cd7e4e57000243b1ac98684b781d1, type: 3}
+  m_Name: FirstChapter
+  m_EditorClassIdentifier: Jiaozi.Runtime::Jiaozi.FirstChapterData
+  levelId: first-order
+  levelName: "\u5F00\u5F20\u7B2C\u4E00\u5355"
+  rules:
+    starOrders: 020000000400000006000000
+    roundSeconds: 180
+    pulpSeconds: 2
+    dryingSeconds: 4
+    printSeconds: 2
+    stampSeconds: 1
+    moveSpeed: 3
+    interactionDistance: 1.2
+    orderSequence: 010000000100000002000000
+  starOrders: 020000000400000006000000
+  spawnPoints:
+  - {x: -4, y: 0, z: -0.7}
+  - {x: 3, y: 0, z: -0.7}
+  stations:
+  - visualPrefab: {fileID: 0}
+    label: "\u6284\u7EB8\u69FD"
+    position: {x: -4.5, y: 0, z: 1.8}
+    operationOffset: {x: 0, y: 0, z: -0.7}
+    size: {x: 1, y: 1, z: 1}
+  - visualPrefab: {fileID: 0}
+    label: "\u667E\u7EB8 A"
+    position: {x: -3, y: 0, z: 1.8}
+    operationOffset: {x: 0, y: 0, z: -0.7}
+    size: {x: 1, y: 1, z: 1}
+  - visualPrefab: {fileID: 0}
+    label: "\u667E\u7EB8 B"
+    position: {x: -1.5, y: 0, z: 1.8}
+    operationOffset: {x: 0, y: 0, z: -0.7}
+    size: {x: 1, y: 1, z: 1}
+  - visualPrefab: {fileID: 0}
+    label: "\u5370\u5237\u53F0"
+    position: {x: 2, y: 0, z: 1.8}
+    operationOffset: {x: 0, y: 0, z: -0.7}
+    size: {x: 1, y: 1, z: 1}
+  - visualPrefab: {fileID: 0}
+    label: "\u76D6\u5370\u53F0"
+    position: {x: 4, y: 0, z: 1.8}
+    operationOffset: {x: 0, y: 0, z: -0.7}
+    size: {x: 1, y: 1, z: 1}
+  - visualPrefab: {fileID: 0}
+    label: "\u5171\u4EAB\u53F0"
+    position: {x: -1.1, y: 0, z: -2.2}
+    operationOffset: {x: 0, y: 0, z: -0.7}
+    size: {x: 1, y: 1, z: 1}
+  - visualPrefab: {fileID: 0}
+    label: "\u4EA4\u4ED8\u7A97\u53E3"
+    position: {x: 5, y: 0, z: -1.5}
+    operationOffset: {x: 0, y: 0, z: -0.7}
+    size: {x: 1, y: 1, z: 1}
+  partitions:
+  - {x: 0, y: 0.5, z: 2.5}
+  - {x: 0, y: 0.5, z: -2.5}
+  artisans:
+  - id: zhituan
+    displayName: "\u7EB8\u56E2"
+    color: {r: 0.1, g: 0.62, b: 0.67, a: 1}
+    visualPrefab: {fileID: 0}
+    handOffset: {x: 0, y: 0.85, z: 0.5}
+    animator: {fileID: 0}
+  - id: yintao
+    displayName: "\u5370\u6843"
+    color: {r: 0.87, g: 0.38, b: 0.2, a: 1}
+    visualPrefab: {fileID: 0}
+    handOffset: {x: 0, y: 0.85, z: 0.5}
+    animator: {fileID: 0}
+  ticketPaper: {fileID: 0}
+  ticketInk: {fileID: 0}
+  ticketSeal: {fileID: 0}

@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &239307458
+--- !u!1 &2036855256
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,8 +127,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 239307460}
-  - component: {fileID: 239307459}
+  - component: {fileID: 2036855258}
+  - component: {fileID: 2036855257}
   m_Layer: 0
   m_Name: Graybox
   m_TagString: Untagged
@@ -136,19 +136,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &239307459
+--- !u!114 &2036855257
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 239307458}
+  m_GameObject: {fileID: 2036855256}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a35d27bea47edb64e91c70ec123e63cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Jiaozi.Runtime::Graybox
   config:
+    starOrders: 020000000400000006000000
     roundSeconds: 180
     pulpSeconds: 2
     dryingSeconds: 4
@@ -157,45 +158,53 @@ MonoBehaviour:
     moveSpeed: 3
     interactionDistance: 1.2
     orderSequence: 010000000100000002000000
+  chapter: {fileID: 11400000, guid: 6d1c10dcb29a2cd4ebad878ba027a14f, type: 2}
   layout:
-  - label: "\u6284\u7EB8\u69FD"
+  - visualPrefab: {fileID: 0}
+    label: "\u6284\u7EB8\u69FD"
     position: {x: -4.5, y: 0, z: 1.8}
     operationOffset: {x: 0, y: 0, z: -0.7}
     size: {x: 1, y: 1, z: 1}
-  - label: "\u667E\u7EB8 A"
+  - visualPrefab: {fileID: 0}
+    label: "\u667E\u7EB8 A"
     position: {x: -3, y: 0, z: 1.8}
     operationOffset: {x: 0, y: 0, z: -0.7}
     size: {x: 1, y: 1, z: 1}
-  - label: "\u667E\u7EB8 B"
+  - visualPrefab: {fileID: 0}
+    label: "\u667E\u7EB8 B"
     position: {x: -1.5, y: 0, z: 1.8}
     operationOffset: {x: 0, y: 0, z: -0.7}
     size: {x: 1, y: 1, z: 1}
-  - label: "\u5370\u5237\u53F0"
+  - visualPrefab: {fileID: 0}
+    label: "\u5370\u5237\u53F0"
     position: {x: 2, y: 0, z: 1.8}
     operationOffset: {x: 0, y: 0, z: -0.7}
     size: {x: 1, y: 1, z: 1}
-  - label: "\u76D6\u5370\u53F0"
+  - visualPrefab: {fileID: 0}
+    label: "\u76D6\u5370\u53F0"
     position: {x: 4, y: 0, z: 1.8}
     operationOffset: {x: 0, y: 0, z: -0.7}
     size: {x: 1, y: 1, z: 1}
-  - label: "\u5171\u4EAB\u53F0"
+  - visualPrefab: {fileID: 0}
+    label: "\u5171\u4EAB\u53F0"
     position: {x: -1.1, y: 0, z: -2.2}
     operationOffset: {x: 0, y: 0, z: -0.7}
     size: {x: 1, y: 1, z: 1}
-  - label: "\u4EA4\u4ED8\u7A97\u53E3"
+  - visualPrefab: {fileID: 0}
+    label: "\u4EA4\u4ED8\u7A97\u53E3"
     position: {x: 5, y: 0, z: -1.5}
     operationOffset: {x: 0, y: 0, z: -0.7}
     size: {x: 1, y: 1, z: 1}
   partitionPositions:
   - {x: 0, y: 0.5, z: 2.5}
   - {x: 0, y: 0.5, z: -2.5}
---- !u!4 &239307460
+--- !u!4 &2036855258
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 239307458}
+  m_GameObject: {fileID: 2036855256}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -208,4 +217,4 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 239307460}
+  - {fileID: 2036855258}

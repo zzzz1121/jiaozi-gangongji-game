@@ -32,6 +32,12 @@ namespace Jiaozi
     [Serializable]
     public class WorkshopConfig
     {
+        public int[] starOrders =
+        {
+            2,
+            4,
+            6
+        };
         public float roundSeconds = 180, pulpSeconds = 2, dryingSeconds = 4, printSeconds = 2, stampSeconds = 1;
         public float moveSpeed = 3, interactionDistance = 1.2f;
         public int[] orderSequence =
@@ -92,7 +98,7 @@ namespace Jiaozi
         public int Orders { get; private set; }
         public int Received { get; private set; }
         public int Score => Tickets * 10 + Orders * 10;
-        public int Stars => Orders >= 6 ? 3 : Orders >= 4 ? 2 : Orders >= 2 ? 1 : 0;
+        public int Stars => Orders >= Config.starOrders[2] ? 3 : Orders >= Config.starOrders[1] ? 2 : Orders >= Config.starOrders[0] ? 1 : 0;
         public int Required => Config.orderSequence[Orders % Config.orderSequence.Length];
         public bool TutorialDelivered { get; private set; }
         public int ResultsCount { get; private set; }

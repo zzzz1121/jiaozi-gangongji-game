@@ -14,4 +14,8 @@ Run-Unity "-batchmode -nographics -projectPath `"$project`" -runTests -testPlatf
 [xml]$report=Get-Content (Join-Path $results 'rules.xml')
 if($report.'test-run'.result -ne 'Passed'){throw 'Rules tests did not pass'}
 Write-Output "Passed $($report.'test-run'.passed) rules tests."
+foreach($name in @('PerformanceTestRunInfo.json','PerformanceTestRunInfo.json.meta','PerformanceTestRunSettings.json','PerformanceTestRunSettings.json.meta')) {
+    $generated=Join-Path $project "Assets\Resources\$name"
+    if(Test-Path -LiteralPath $generated){Remove-Item -LiteralPath $generated}
+}
 if($Build){Run-Unity "-batchmode -nographics -quit -projectPath `"$project`" -executeMethod GrayboxBuild.Build -logFile `"$results\build.log`""}

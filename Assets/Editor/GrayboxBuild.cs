@@ -28,7 +28,17 @@ public static class GrayboxBuild
         if (AssetDatabase.LoadAssetAtPath<Material>("Assets/Resources/GrayboxMaterial.mat") == null)
             AssetDatabase.CreateAsset(new Material(Shader.Find("Universal Render Pipeline/Lit")), "Assets/Resources/GrayboxMaterial.mat");
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-        new GameObject("Graybox").AddComponent<Graybox>();
+        var game = new GameObject("Graybox").AddComponent<Graybox>();
+        var chapter = AssetDatabase.LoadAssetAtPath<Jiaozi.FirstChapterData>("Assets/Resources/FirstChapter.asset");
+        if (chapter == null)
+        {
+            chapter = ScriptableObject.CreateInstance<Jiaozi.FirstChapterData>();
+            chapter.stations = game.layout;
+            chapter.partitions = game.partitionPositions;
+            AssetDatabase.CreateAsset(chapter, "Assets/Resources/FirstChapter.asset");
+        }
+
+        game.chapter = chapter;
         System.IO.Directory.CreateDirectory("Assets/Scenes");
         EditorSceneManager.SaveScene(scene, "Assets/Scenes/Graybox.unity");
         EditorBuildSettings.scenes = new[]

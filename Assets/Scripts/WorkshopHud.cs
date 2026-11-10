@@ -105,7 +105,8 @@ public sealed class WorkshopHud : MonoBehaviour
 
     void ApplySafeArea()
     {
-        if (Screen.width == 0 || Screen.height == 0) return;
+        if (Screen.width == 0 || Screen.height == 0)
+            return;
         var safe = Screen.safeArea;
         float sx = root.resolvedStyle.width / Screen.width;
         float sy = root.resolvedStyle.height / Screen.height;
@@ -141,8 +142,10 @@ public sealed class WorkshopHud : MonoBehaviour
     {
         var r = game.Rules;
         bool tutorial = r.Phase == RoundPhase.Tutorial;
+        bool inWorld = game.Flow == null || game.Flow.WorldActive || game.Flow.LegacySmoke;
+        top.style.display = bottom.style.display = inWorld ? DisplayStyle.Flex : DisplayStyle.None;
         status.text = tutorial ? "交子赶工记 / 机制灰盒    教学 · 不计时" : $"订单 {r.Received}/{r.Required} 张    剩余 {Mathf.CeilToInt(r.Remaining)} 秒    已交 {r.Tickets} 张    完成 {r.Orders} 单    得分 {r.Score}";
-        hint.text = tutorial ? (r.TutorialDelivered ? "教学已交付！按 Enter 清空教学物料并正式开张。" : "抄纸 → 晾干 → 印刷 → 盖印 → 交付。Enter 可跳过教学。") : message;
+        hint.text = tutorial ? TutorialGuide.Instruction(r) : message;
         players.text = $"P1：{Graybox.PaperName(r.Hands[0])}     |     P2：{Graybox.PaperName(r.Hands[1])}     |     " + message;
         for (int i = 0; i < stations.Length; i++)
         {
@@ -152,12 +155,16 @@ public sealed class WorkshopHud : MonoBehaviour
             if (duration > 0 && s.Progress > 0 && !s.Complete)
                 state += $" {Mathf.Clamp01(s.Progress / duration) * 100:F0}%";
             stations[i].text = game.layout[i].label + "\n" + state;
-            stations[i].style.color = game.Players[0].Target == i ? new Color(.4f, 1, 1) : game.Players[1].Target == i ? new Color(1, .7f, .4f) : Color.white;
+            bool guide = tutorial && TutorialGuide.Target(r) == i;
+            if (guide)
+                stations[i].text = "下一步 ↓\n" + stations[i].text;
+            stations[i].style.color = guide ? new Color(1, .87f, .35f) : game.Players[0].Target == i ? new Color(.4f, 1, 1) : game.Players[1].Target == i ? new Color(1, .7f, .4f) : Color.white;
         }
 
         for (int i = 0; i < 2; i++)
             actors[i].text = $"P{i + 1} · {Graybox.PaperName(r.Hands[i])}";
         bool menu = r.Phase == RoundPhase.Paused || r.Phase == RoundPhase.Results;
+        menu &= game.Flow == null || game.Flow.LegacySmoke;
         overlay.style.display = menu ? DisplayStyle.Flex : DisplayStyle.None;
         if (menu)
         {
@@ -180,6 +187,12 @@ public sealed class WorkshopHud : MonoBehaviour
     {
         if (root == null || root.resolvedStyle.width <= 0)
             return;
+        bool visible = game.Flow == null || game.Flow.WorldActive || game.Flow.LegacySmoke;
+        top.style.display = bottom.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        foreach (var label in stations)
+            label.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        foreach (var label in actors)
+            label.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         for (int i = 0; i < stations.Length; i++)
             PositionLabel(stations[i], game.ItemAnchors[i].position + Vector3.up * .5f);
         for (int i = 0; i < actors.Length; i++)

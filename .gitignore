@@ -15,3 +15,5 @@
 /*.log
 /MemoryCaptures/
 /Recordings/
+/Assets/Resources/PerformanceTestRunInfo.json*
+/Assets/Resources/PerformanceTestRunSettings.json*

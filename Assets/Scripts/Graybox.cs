@@ -8,6 +8,7 @@ public class Graybox : MonoBehaviour
     [Serializable]
     public class StationLayout
     {
+        public GameObject visualPrefab;
         public string label;
         public Vector3 position;
         public Vector3 operationOffset = new Vector3(0, 0, -.7f);
@@ -15,6 +16,9 @@ public class Graybox : MonoBehaviour
     }
 
     public WorkshopConfig config = new WorkshopConfig();
+    public FirstChapterData chapter;
+    public GameFlow Flow { get; private set; }
+
     public StationLayout[] layout =
     {
         new StationLayout
@@ -61,6 +65,7 @@ public class Graybox : MonoBehaviour
     public sealed class Actor
     {
         public Transform Root, Cargo;
+        public GameObject Visual;
         public CharacterController Controller;
         public Vector3 Facing = Vector3.forward;
         public int Target = -1;
@@ -112,6 +117,16 @@ public class Graybox : MonoBehaviour
     void Awake()
     {
         Application.targetFrameRate = 60;
+        if (chapter == null)
+            chapter = Resources.Load<FirstChapterData>("FirstChapter");
+        if (chapter == null)
+            chapter = ScriptableObject.CreateInstance<FirstChapterData>();
+        config = JsonUtility.FromJson<WorkshopConfig>(JsonUtility.ToJson(chapter.rules));
+        config.starOrders = chapter.starOrders;
+        if (chapter.stations != null && chapter.stations.Length == 7)
+            layout = chapter.stations;
+        if (chapter.partitions != null)
+            partitionPositions = chapter.partitions;
         Rules = new WorkshopRules(config);
         Controls = new WorkshopInput();
         try
@@ -133,6 +148,10 @@ public class Graybox : MonoBehaviour
         BuildWorld();
         hud = gameObject.AddComponent<WorkshopHud>();
         hud.Initialize(this);
+        gameObject.AddComponent<WorkshopAudio>().Initialize(this);
+        Flow = gameObject.AddComponent<GameFlow>();
+        Flow.Initialize(this);
+        gameObject.AddComponent<FirstChapterMenu>().Initialize(this);
         Rules.Reset(true);
         Refresh();
     }
@@ -186,6 +205,8 @@ public class Graybox : MonoBehaviour
         {
             var l = layout[i];
             surfaces[i] = Box(l.label, l.position + Vector3.up * .45f, new Vector3(l.size.x, .9f, l.size.z), new Color(.35f, .37f, .35f)).GetComponent<Renderer>();
+            if (l.visualPrefab != null)
+                Instantiate(l.visualPrefab, l.position, Quaternion.identity, transform);
             var op = new GameObject(l.label + "操作点");
             op.transform.SetParent(transform);
             op.transform.position = l.position + l.operationOffset;
@@ -222,7 +243,8 @@ public class Graybox : MonoBehaviour
             {
                 Root = root.transform,
                 Controller = cc,
-                Cargo = cargo
+                Cargo = cargo,
+                Visual = body
             };
         }
 
@@ -239,7 +261,16 @@ public class Graybox : MonoBehaviour
         }
 
         hud.PositionLabels();
-        if (Controls.Pause.WasPressedThisFrame())
+        if (Flow != null && !Flow.LegacySmoke)
+        {
+            if (!Flow.WorldActive || Flow.TransitionFrame == Time.frameCount)
+                return;
+            // GameFlow handles Esc; never advance simulation on the pause input frame.
+            if (Controls.Pause.WasPressedThisFrame())
+                return;
+        }
+
+        if ((Flow == null || Flow.LegacySmoke) && Controls.Pause.WasPressedThisFrame())
         {
             Rules.TogglePause();
             menuIndex = 0;
@@ -271,7 +302,10 @@ public class Graybox : MonoBehaviour
 
         if (Rules.Phase == RoundPhase.Tutorial && Controls.Confirm.WasPressedThisFrame())
         {
-            StartRound();
+            if (Flow != null && !Flow.LegacySmoke)
+                Flow.StartFormal();
+            else
+                StartRound();
             return;
         }
 
@@ -282,6 +316,7 @@ public class Graybox : MonoBehaviour
             hud.SelectMenu(0);
             return;
         }
+
         if (Rules.Phase == RoundPhase.Running)
             elapsed += Time.deltaTime;
         for (int i = 0; i < 2; i++)
@@ -408,6 +443,34 @@ public class Graybox : MonoBehaviour
         hud?.Refresh(message);
     }
 
+    public void ApplyArtisans(int[] selected)
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            var actor = Players[i];
+            var definition = chapter.artisans[selected[i]];
+            if (actor.Visual != null)
+                Destroy(actor.Visual);
+            GameObject visual;
+            if (definition.visualPrefab != null)
+                visual = Instantiate(definition.visualPrefab, actor.Root);
+            else
+            {
+                visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                Destroy(visual.GetComponent<Collider>());
+                visual.transform.SetParent(actor.Root, false);
+                visual.transform.localPosition = Vector3.up * .65f;
+                visual.transform.localScale = new Vector3(.65f, .65f, .65f);
+                visual.GetComponent<Renderer>().material = Mat(definition.color);
+            }
+
+            actor.Visual = visual;
+            actor.Cargo.localPosition = definition.handOffset;
+            var adapter = visual.AddComponent<ArtisanVisual>();
+            adapter.Initialize(this, i, definition.animator);
+        }
+    }
+
     public void StartRound()
     {
         menuIndex = 0;
@@ -439,7 +502,7 @@ public class Graybox : MonoBehaviour
         {
             var p = Players[i];
             p.Controller.enabled = false;
-            p.Root.position = new Vector3(i == 0 ? -4 : 3, 0, -.7f);
+            p.Root.position = chapter.spawnPoints[i];
             p.Root.rotation = Quaternion.identity;
             p.Facing = Vector3.forward;
             p.Target = -1;
