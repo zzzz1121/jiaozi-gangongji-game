@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using UnityEngine;
+using UnityEngine.UIElements;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using Jiaozi;
@@ -93,6 +94,19 @@ public sealed class FirstChapterSmoke : MonoBehaviour
         yield return Shot("title-1080", 1920, 1080);
         yield return Press(Key.DownArrow);
         Check(flow.Focus == 1, "title keyboard focus moves to collection");
+        yield return new WaitForSecondsRealtime(.3f);
+        var titleRoot = game.GetComponent<UIDocument>().rootVisualElement;
+        var paperAction = titleRoot.Q<Button>("title-action-1");
+        var paperLabel = titleRoot.Q<Label>("title-label-1");
+        Check(paperAction.style.scale.value.value.x > 1.025f, "whole paper tag scales on selection");
+        Check(paperLabel.text == "收藏图鉴" && paperLabel.style.unityTextOutlineWidth.value == 0, "lettering stays plain without arrow or outline");
+        yield return Shot("title-paper-focused");
+        using (var down = PointerDownEvent.GetPooled()) { down.target = paperAction; paperAction.SendEvent(down); }
+        yield return new WaitForSecondsRealtime(.3f);
+        Check(paperAction.style.scale.value.value.x < 1, "whole paper tag compresses on press");
+        using (var up = PointerUpEvent.GetPooled()) { up.target = paperAction; paperAction.SendEvent(up); }
+        yield return new WaitForSecondsRealtime(.3f);
+        Check(paperAction.style.scale.value.value.x > 1.025f, "paper tag rebounds after release");
         yield return Press(Key.Enter);
         Check(flow.Screen == GameScreen.Gallery, "title collection action");
         yield return Press(Key.Escape);

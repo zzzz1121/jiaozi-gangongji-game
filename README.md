@@ -4,7 +4,7 @@ Windows 同机双人原型。Unity **6000.3.28f1**，URP **17.3.0**，Input Syst
 
 ## 打开与游玩
 
-最新标题页试玩：`Builds/WindowsTitleV1/JiaoziGraybox.exe`。沿用第一版纸艺视觉，支持鼠标和 ↑↓ / Enter 菜单操作。实现与验证见 [第一版标题页实现](Docs/第一版标题页实现.md)。
+最新标题页试玩：`Builds/WindowsTitlePaper/JiaoziGraybox.exe`。沿用第一版纸艺视觉，纸签整体选中动效、墨色行楷文字，支持鼠标和 ↑↓ / Enter 菜单操作。实现与验证见 [第一版标题页实现](Docs/第一版标题页实现.md)。
 
 Unity Hub 添加本目录，打开 `Assets/Scenes/Graybox.unity` 后播放。Windows 构建入口为 `Builds/Windows/JiaoziGraybox.exe`，整个 Windows 文件夹必须一起保留。
 
