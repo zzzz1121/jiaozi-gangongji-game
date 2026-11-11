@@ -10,6 +10,7 @@ public sealed class FirstChapterMenu : MonoBehaviour
     VisualElement root, overlay, card, actions, ticket;
     Label title, description, notice, ticketText;
     Image sealArtwork;
+    VisualElement illustrations;
     readonly List<Button> buttons = new List<Button>();
     GameScreen last = (GameScreen)(-1);
     public void Initialize(Graybox owner)
@@ -23,6 +24,8 @@ public sealed class FirstChapterMenu : MonoBehaviour
         overlay.style.top = 0;
         overlay.style.bottom = 0;
         overlay.style.backgroundColor = new Color(.035f, .075f, .09f, .95f);
+        overlay.style.backgroundImage=Resources.Load<Texture2D>("Art2D/menu-background-v1");
+        overlay.style.unityBackgroundScaleMode=ScaleMode.ScaleAndCrop;
         overlay.style.alignItems = Align.Center;
         overlay.style.justifyContent = Justify.Center;
         root.Add(overlay);
@@ -34,15 +37,19 @@ public sealed class FirstChapterMenu : MonoBehaviour
         card.style.paddingBottom = 18;
         card.style.paddingLeft = 30;
         card.style.paddingRight = 30;
-        card.style.backgroundColor = new Color(.10f, .16f, .18f);
+        card.style.backgroundColor = new Color(.98f,.94f,.83f,.96f);
+        card.style.color=new Color(.21f,.16f,.1f);
+        card.style.borderTopWidth=2;card.style.borderBottomWidth=2;card.style.borderLeftWidth=2;card.style.borderRightWidth=2;
+        card.style.borderTopColor=card.style.borderBottomColor=card.style.borderLeftColor=card.style.borderRightColor=new Color(.55f,.36f,.17f);
         overlay.Add(card);
         var scroll = new ScrollView();
         scroll.style.flexShrink = 1;
         card.Add(scroll);
         title = new Label();
         title.style.fontSize = 30;
-        title.style.color = new Color(.97f, .89f, .69f);
+        title.style.color = new Color(.3f,.18f,.08f);
         scroll.Add(title);
+        illustrations=new VisualElement();illustrations.style.flexDirection=FlexDirection.Row;illustrations.style.alignItems=Align.Center;illustrations.style.marginTop=8;scroll.Add(illustrations);
         description = new Label();
         description.style.whiteSpace = WhiteSpace.Normal;
         description.style.fontSize = 18;
@@ -61,6 +68,9 @@ public sealed class FirstChapterMenu : MonoBehaviour
         ticketText.style.fontSize = 20;
         ticketText.style.whiteSpace = WhiteSpace.Normal;
         ticket.Add(ticketText);
+        var existingTicket=Art2D.Picture(Art2D.Region("source-07",0,0,1,1),80,120);
+        ticket.style.flexDirection=FlexDirection.Row;ticket.style.alignItems=Align.Center;
+        ticket.Add(existingTicket);ticketText.style.flexGrow=1;
         if(game.chapter.ticketInk!=null){
             var artwork=new VisualElement();artwork.style.width=150;artwork.style.height=200;ticket.Add(artwork);
             var ink=new Image{image=game.chapter.ticketInk,scaleMode=ScaleMode.ScaleToFit};ink.style.position=Position.Absolute;ink.style.left=0;ink.style.right=0;ink.style.top=0;ink.style.bottom=0;artwork.Add(ink);
@@ -68,7 +78,7 @@ public sealed class FirstChapterMenu : MonoBehaviour
         }
         notice = new Label();
         notice.style.whiteSpace = WhiteSpace.Normal;
-        notice.style.color = new Color(1f, 0.72f, 0.45f);
+        notice.style.color = new Color(0.65f, 0.2f, 0.12f);
         notice.style.fontSize = 16;
         scroll.Add(notice);
         actions = new VisualElement();
@@ -89,7 +99,7 @@ public sealed class FirstChapterMenu : MonoBehaviour
         switch (screen)
         {
             case GameScreen.Title:
-                return "完整第一关试玩版\n两人合作，从抄纸到盖印，亲手交出第一张交子。\n当前角色、票面与场景为占位表现，正式美术待接入。";
+                return "完整第一关试玩版\n两人合作，从抄纸到盖印，亲手交出第一张交子。\n已接入部分 2D 美术，3D 角色和场景继续保留灰盒。";
             case GameScreen.Map:
                 var record = f.Progress.records.Find(x => x.id == game.chapter.levelId);
                 return $"第一关已开放 · 最高星级 {record?.stars ?? 0}/3 · 最高分 {record?.score ?? 0}\n第二关 院里院外 / 第三关 赶工时刻 / Boss 关：后续开发，当前不可进入。";
@@ -150,10 +160,18 @@ public sealed class FirstChapterMenu : MonoBehaviour
             return;
         title.text = screen == GameScreen.Title ? "交子赶工记" : screen == GameScreen.Map ? "作坊地图" : screen == GameScreen.Selection ? "双人工匠选择" : screen == GameScreen.Pause ? "作坊已暂停" : screen == GameScreen.Results ? "本轮结算" : screen == GameScreen.Gallery ? "组合交子图鉴" : screen == GameScreen.Settings ? "设置" : "操作说明";
         description.text = Body(screen);
+        illustrations.Clear();
+        if(screen==GameScreen.Title)illustrations.Add(Art2D.Picture(Art2D.Region("source-00",0,0,1,1),116,116));
+        if(screen==GameScreen.Selection){
+            for(int p=0;p<2;p++){var portrait=Art2D.Picture(Art2D.Portrait(f.Selected[p]),80,80);portrait.style.marginRight=12;illustrations.Add(portrait);}
+        }
+        if(screen==GameScreen.Map)illustrations.Add(Art2D.Picture(Art2D.Icon(11),90,90));
+        if(screen==GameScreen.Results){for(int star=0;star<3;star++)illustrations.Add(Art2D.Picture(Art2D.Icon(star<f.StarCount?6:5),38,38));}
+        if(screen==GameScreen.Settings)illustrations.Add(Art2D.Picture(Art2D.Icon(3),40,40));
         notice.text = f.Notice;
         bool showTicket = screen == GameScreen.Selection || screen == GameScreen.Results || screen == GameScreen.Gallery;
         ticket.style.display = showTicket ? DisplayStyle.Flex : DisplayStyle.None;
-        ticketText.text = "交子票面占位预览\n" + f.Pair + "\n" + (screen == GameScreen.Selection ? "黑墨画像 → 加盖朱印" : f.Selected[0] != f.Selected[1] && f.Progress.collections.Contains(f.CollectionKey) ? "朱印已落 · 已收藏" : "尚未收藏，正式轮次交付后结算解锁");
+        ticketText.text = "组合交子\n" + f.Pair + "\n" + (screen == GameScreen.Selection ? "票面美术预览，状态以局内物件为准" : f.Selected[0] != f.Selected[1] && f.Progress.collections.Contains(f.CollectionKey) ? "已收藏" : "尚未收藏，正式轮次交付后结算解锁");
         if (game.chapter.ticketPaper != null)
             ticket.style.backgroundImage = game.chapter.ticketPaper;
         if(sealArtwork!=null)sealArtwork.style.display=screen!=GameScreen.Selection&&f.Selected[0]!=f.Selected[1]&&f.Progress.collections.Contains(f.CollectionKey)?DisplayStyle.Flex:DisplayStyle.None;
@@ -216,3 +234,4 @@ public sealed class FirstChapterMenu : MonoBehaviour
             game.Flow.Changed -= Refresh;
     }
 }
+

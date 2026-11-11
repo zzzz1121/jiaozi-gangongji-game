@@ -53,6 +53,10 @@ public sealed class WorkshopHud : MonoBehaviour
         bottom.style.backgroundColor = new Color(.08f, .13f, .15f, .96f);
         root.Add(bottom);
         players = Text(bottom, 19);
+        var materials=new VisualElement();materials.style.flexDirection=FlexDirection.Row;materials.style.marginTop=4;bottom.Add(materials);
+        var regions=new[]{new Rect(.265f,.075f,.22f,.35f),new Rect(.775f,.065f,.205f,.36f),new Rect(.025f,.53f,.2f,.44f),new Rect(.275f,.53f,.2f,.44f)};
+        var names=new[]{"湿纸","干纸","黑墨交子","朱印交子"};
+        for(int i=0;i<4;i++){var cell=new VisualElement();cell.style.flexDirection=FlexDirection.Row;cell.style.alignItems=Align.Center;cell.style.width=150;materials.Add(cell);var r=regions[i];cell.Add(Art2D.Picture(Art2D.Region("source-04",r.x,r.y,r.width,r.height),26,30));Text(cell,14).text=names[i];}
         Text(bottom, 16).text = "P1  WASD · F 拿放/递交 · 按住 G 加工     P2  方向键 · / 拿放/递交 · 按住 . 加工     Esc 暂停";
         stations = new Label[game.layout.Length];
         for (int i = 0; i < stations.Length; i++)
