@@ -61,4 +61,3 @@ Windows 中文字体使用系统微软雅黑/黑体，不把系统字体复制�
 设计来源：[素材与设计仓库](https://github.com/2568383756/jiaozi-gangongji)。定稿仅供美术和镜头参考，灰盒布局以机制验证为准。
 
 最新 2D 接入版：`Builds/Windows2D/JiaoziGraybox.exe`。来源与提示词见 [2D资源复用与生成记录](Docs/2D资源复用与生成记录.md)。
-

@@ -234,4 +234,3 @@ public sealed class FirstChapterMenu : MonoBehaviour
             game.Flow.Changed -= Refresh;
     }
 }
-
