@@ -4,6 +4,8 @@ Windows 同机双人原型。Unity **6000.3.28f1**，URP **17.3.0**，Input Syst
 
 ## 打开与游玩
 
+最新标题页试玩：`Builds/WindowsTitleV1/JiaoziGraybox.exe`。沿用第一版纸艺视觉，支持鼠标和 ↑↓ / Enter 菜单操作。实现与验证见 [第一版标题页实现](Docs/第一版标题页实现.md)。
+
 Unity Hub 添加本目录，打开 `Assets/Scenes/Graybox.unity` 后播放。Windows 构建入口为 `Builds/Windows/JiaoziGraybox.exe`，整个 Windows 文件夹必须一起保留。
 
 从标题选择开始游戏 → 第一关 → 双人选角。P1 用 A/D 切换、F 确认；P2 用左右键切换、主键盘 / 确认。两人不能选择同一工匠。也可鼠标点击，或用上下键和 Enter 选择按钮。已确认者再次确认可取消。

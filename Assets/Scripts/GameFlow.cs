@@ -93,6 +93,12 @@ public sealed class GameFlow : MonoBehaviour
         Changed?.Invoke();
     }
 
+    public void FocusMenuItem(int index)
+    {
+        Focus = Mathf.Clamp(index, 0, MenuItems().Length - 1);
+        Changed?.Invoke();
+    }
+
     public void OpenSelection()
     {
         Ready[0] = Ready[1] = false;

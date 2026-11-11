@@ -13,6 +13,7 @@ public sealed class FirstChapterMenu : MonoBehaviour
     VisualElement illustrations;
     readonly List<Button> buttons = new List<Button>();
     GameScreen last = (GameScreen)(-1);
+    TitleScreenView titleScreen;
     public void Initialize(Graybox owner)
     {
         game = owner;
@@ -88,6 +89,7 @@ public sealed class FirstChapterMenu : MonoBehaviour
         keys.style.marginTop = 10;
         card.Add(keys);
         root.RegisterCallback<NavigationSubmitEvent>(e => e.StopImmediatePropagation(), TrickleDown.TrickleDown);
+        titleScreen = new TitleScreenView(root, game.Flow);
         game.Flow.Changed += Refresh;
         Refresh();
     }
@@ -155,6 +157,12 @@ public sealed class FirstChapterMenu : MonoBehaviour
     {
         var f = game.Flow;
         var screen = f.Screen;
+        titleScreen.Refresh(!f.LegacySmoke && screen == GameScreen.Title);
+        if (screen == GameScreen.Title && !f.LegacySmoke)
+        {
+            overlay.style.display = DisplayStyle.None;
+            return;
+        }
         overlay.style.display = f.LegacySmoke || screen == GameScreen.Playing ? DisplayStyle.None : DisplayStyle.Flex;
         if (screen == GameScreen.Playing || f.LegacySmoke)
             return;
