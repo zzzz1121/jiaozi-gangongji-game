@@ -184,17 +184,20 @@ public class Graybox : MonoBehaviour
         light.intensity = 1.3f;
         light.transform.rotation = Quaternion.Euler(55, -25, 0);
         RenderSettings.ambientLight = Color.gray;
-        var environment = Array.IndexOf(Environment.GetCommandLineArgs(), "--jiaozi-smoke") < 0
-            ? Resources.Load<GameObject>("WorkshopModels/Workshop") : null;
+        var args = Environment.GetCommandLineArgs();
+        bool paletteReview = Array.IndexOf(args, "--jiaozi-palette-review") >= 0;
+        var environment = Array.IndexOf(args, "--jiaozi-smoke") < 0
+            ? Resources.Load<GameObject>(paletteReview ? "WorkshopModels/Workshop" : "WorkshopModels/WorkshopV05") : null;
         var art = environment != null ? Instantiate(environment, new Vector3(-6, 0, -4), Quaternion.Euler(0, 180, 0), transform) : null;
         modeledWorkshop = art != null;
         if (modeledWorkshop)
         {
+            ApplyWorkshopPalette(art);
             light.intensity = .80f;
-            light.color = new Color(1f, .96f, .90f);
+            light.color = new Color(1f, .98f, .95f);
             light.transform.rotation = Quaternion.Euler(58, -32, 0);
             light.shadows = LightShadows.Soft;
-            light.shadowStrength = .72f;
+            light.shadowStrength = .65f;
             light.shadowBias = .18f;
             light.shadowNormalBias = .22f;
             RenderSettings.sun = light;
@@ -497,6 +500,42 @@ public class Graybox : MonoBehaviour
         foreach (var node in root.GetComponentsInChildren<Transform>(true))
             if (node.name == nodeName) return node;
         return null;
+    }
+
+    static void ApplyWorkshopPalette(GameObject art)
+    {
+        var remaps = new System.Collections.Generic.Dictionary<Material, Material>();
+        foreach (var renderer in art.GetComponentsInChildren<Renderer>())
+        {
+            var materials = renderer.sharedMaterials;
+            bool changed = false;
+            for (int i = 0; i < materials.Length; i++)
+            {
+                var source = materials[i];
+                if (source == null) continue;
+                string colorProperty = source.HasProperty("baseColorFactor") ? "baseColorFactor" : "_BaseColor";
+                if (!source.HasProperty(colorProperty)) continue;
+                if (!remaps.TryGetValue(source, out var tinted))
+                {
+                    string name = source.name;
+                    Color tint;
+                    if (name.StartsWith("MAT_floor_courtyard")) tint = new Color(.81f, .89f, .96f);
+                    else if (name.StartsWith("MAT_floor_workshop")) tint = new Color(.76f, .86f, 1f);
+                    else if (name.StartsWith("MAT_roof")) tint = new Color(.57f, .72f, .83f);
+                    else if (name.StartsWith("MAT_ginkgo")) tint = new Color(.88f, .75f, .45f);
+                    else if (name.StartsWith("MAT_wood_light")) tint = new Color(.80f, .70f, .64f);
+                    else if (name.StartsWith("MAT_paving")) tint = new Color(.83f, .86f, .92f);
+                    else if (name.StartsWith("MAT_garden_soil")) tint = new Color(.74f, .86f, .83f);
+                    else continue;
+                    tinted = new Material(source) { name = source.name + " · Workshop palette" };
+                    tinted.SetColor(colorProperty, source.GetColor(colorProperty) * tint);
+                    remaps.Add(source, tinted);
+                }
+                materials[i] = tinted;
+                changed = true;
+            }
+            if (changed) renderer.sharedMaterials = materials;
+        }
     }
 
     public void ApplyArtisans(int[] selected)

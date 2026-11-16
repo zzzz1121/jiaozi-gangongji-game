@@ -77,7 +77,8 @@ public sealed class FirstChapterSmoke : MonoBehaviour
         if (Array.IndexOf(Environment.GetCommandLineArgs(), "--jiaozi-art-preview") >= 0)
         {
             flow.BeginPlay(true);
-            yield return Shot("workshop-straight-720", 1280, 720);
+            bool paletteReview = Array.IndexOf(Environment.GetCommandLineArgs(), "--jiaozi-palette-review") >= 0;
+            yield return Shot(paletteReview ? "workshop-v04-palette" : "workshop-v05-shape", 1280, 720);
             if (Array.IndexOf(Environment.GetCommandLineArgs(), "--jiaozi-camera-comparison") >= 0)
             {
                 var cameraTransform = game.View.transform;
