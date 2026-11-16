@@ -6,7 +6,9 @@ public sealed class WorkshopHud : MonoBehaviour
 {
     Graybox game;
     VisualElement root, overlay, top, bottom;
-    Label status, hint, players, title, details;
+    Label order, timer, score, hint, title, details;
+    readonly Label[] hands = new Label[2];
+    VisualElement[] stationProgress;
     Label[] stations, actors;
     Button[] buttons;
     int observedOrders;
@@ -28,39 +30,82 @@ public sealed class WorkshopHud : MonoBehaviour
         root.style.unityFont = Font.CreateDynamicFontFromOSFont(new[] { "Microsoft YaHei", "SimHei", "Arial" }, 20);
         root.style.fontSize = 18;
         root.style.color = new Color(.96f, .94f, .87f);
-        top = new VisualElement();
-        top.style.position = Position.Absolute;
-        top.style.top = 12;
-        top.style.left = 16;
-        top.style.right = 16;
-        top.style.paddingTop = 12;
-        top.style.paddingBottom = 12;
-        top.style.paddingLeft = 18;
-        top.style.backgroundColor = new Color(.08f, .13f, .15f, .96f);
-        root.Add(top);
-        status = Text(top, 24);
-        status.style.whiteSpace = WhiteSpace.Normal;
-        hint = Text(top, 17);
-        hint.style.color = new Color(.83f, .87f, .82f);
-        bottom = new VisualElement();
-        bottom.style.position = Position.Absolute;
-        bottom.style.bottom = 12;
-        bottom.style.left = 16;
-        bottom.style.right = 16;
-        bottom.style.paddingLeft = 18;
-        bottom.style.paddingTop = 10;
-        bottom.style.paddingBottom = 10;
-        bottom.style.backgroundColor = new Color(.08f, .13f, .15f, .96f);
-        root.Add(bottom);
-        players = Text(bottom, 19);
-        var materials=new VisualElement();materials.style.flexDirection=FlexDirection.Row;materials.style.marginTop=4;bottom.Add(materials);
-        var regions=new[]{new Rect(.265f,.075f,.22f,.35f),new Rect(.775f,.065f,.205f,.36f),new Rect(.025f,.53f,.2f,.44f),new Rect(.275f,.53f,.2f,.44f)};
-        var names=new[]{"湿纸","干纸","黑墨交子","朱印交子"};
-        for(int i=0;i<4;i++){var cell=new VisualElement();cell.style.flexDirection=FlexDirection.Row;cell.style.alignItems=Align.Center;cell.style.width=150;materials.Add(cell);var r=regions[i];cell.Add(Art2D.Picture(Art2D.Region("source-04",r.x,r.y,r.width,r.height),26,30));Text(cell,14).text=names[i];}
-        Text(bottom, 16).text = "P1  WASD · F 拿放/递交 · 按住 G 加工     P2  方向键 · / 拿放/递交 · 按住 . 加工     Esc 暂停";
+        top = HudStrip();
+        var summary = Row(top);
+        summary.style.alignItems = Align.FlexStart;
+        var orderStack = new VisualElement { pickingMode = PickingMode.Ignore };
+        summary.Add(orderStack);
+        var orderPaper = Paper(orderStack, new Rect(.02f, .105f, .46f, .36f), 228, 94);
+        var orderRow = Row(orderPaper);
+        orderRow.style.alignItems = Align.Center;
+        orderRow.Add(Art2D.Picture(Art2D.Region("source-07", 0, 0, 1, 1), 36, 55));
+        order = Text(orderRow, 20);
+        order.style.marginLeft = 10;
+        order.style.whiteSpace = WhiteSpace.Normal;
+        order.style.unityFontStyleAndWeight = FontStyle.Bold;
+        score = Text(Paper(orderStack, new Rect(.52f, .17f, .46f, .245f), 226, 37), 15);
+        score.style.unityTextAlign = TextAnchor.MiddleCenter;
+        var gap = new VisualElement { pickingMode = PickingMode.Ignore };
+        gap.style.flexGrow = 1;
+        summary.Add(gap);
+        var clock = Paper(summary, new Rect(.52f, .17f, .46f, .245f), 134, 48);
+        timer = Text(clock, 25);
+        timer.style.unityTextAlign = TextAnchor.MiddleCenter;
+        timer.style.unityFontStyleAndWeight = FontStyle.Bold;
+        var pause = new Button(() => game.Flow.Pause()) { text = "Ⅱ", tooltip = "暂停（Esc）", focusable = false };
+        pause.style.width = pause.style.height = 45;
+        pause.style.marginLeft = 6;
+        pause.style.backgroundColor = new Color(.58f, .18f, .12f);
+        pause.style.color = new Color(1, .93f, .76f);
+        pause.style.fontSize = 23;
+        pause.style.borderTopLeftRadius = pause.style.borderTopRightRadius =
+            pause.style.borderBottomLeftRadius = pause.style.borderBottomRightRadius = 10;
+        summary.Add(pause);
+        hint = Text(top, 15);
+        hint.style.position = Position.Absolute;
+        hint.style.top = 58;
+        hint.style.whiteSpace = WhiteSpace.Normal;
+        hint.style.unityTextAlign = TextAnchor.MiddleCenter;
+        Caption(hint);
+        hint.style.width = Length.Percent(42);
+
+        bottom = HudStrip();
+        var players = Row(bottom);
+        players.style.justifyContent = Justify.SpaceBetween;
+        for (int i = 0; i < 2; i++)
+        {
+            var inventoryCard = Paper(players, new Rect(i == 0 ? .015f : .51f, .59f, .47f, .31f), 228, 74);
+            var badge = Text(inventoryCard, 17);
+            badge.text = $"P{i + 1}";
+            badge.style.position = Position.Absolute;
+            badge.style.left = 14;
+            badge.style.top = 10;
+            badge.style.color = new Color(1, .96f, .84f);
+            badge.style.unityFontStyleAndWeight = FontStyle.Bold;
+            hands[i] = Text(inventoryCard, 19);
+            hands[i].style.position = Position.Absolute;
+            hands[i].style.left = 56;
+            hands[i].style.top = 18;
+            var keys = Text(inventoryCard, 12);
+            keys.style.position = Position.Absolute;
+            keys.style.left = 56;
+            keys.style.top = 40;
+            keys.text = i == 0 ? "F 拿放 · 按住 G 加工" : "/ 拿放 · 按住 . 加工";
+        }
         stations = new Label[game.layout.Length];
+        stationProgress = new VisualElement[stations.Length];
         for (int i = 0; i < stations.Length; i++)
+        {
             stations[i] = WorldLabel();
+            var bar = new VisualElement { pickingMode = PickingMode.Ignore };
+            bar.style.position = Position.Absolute;
+            bar.style.left = 0;
+            bar.style.bottom = 0;
+            bar.style.height = 4;
+            bar.style.backgroundColor = new Color(.27f, .51f, .32f);
+            stations[i].Add(bar);
+            stationProgress[i] = bar;
+        }
         actors = new[]
         {
             WorldLabel(),
@@ -110,6 +155,40 @@ public sealed class WorkshopHud : MonoBehaviour
         root.RegisterCallback<GeometryChangedEvent>(_ => ApplySafeArea());
     }
 
+    VisualElement HudStrip()
+    {
+        var strip = new VisualElement { pickingMode = PickingMode.Ignore };
+        strip.style.position = Position.Absolute;
+        root.Add(strip);
+        return strip;
+    }
+
+    static VisualElement Row(VisualElement parent)
+    {
+        var row = new VisualElement { pickingMode = PickingMode.Ignore };
+        row.style.flexDirection = FlexDirection.Row;
+        parent.Add(row);
+        return row;
+    }
+
+    static VisualElement Paper(VisualElement parent, Rect region, float width, float height)
+    {
+        var card = new VisualElement { pickingMode = PickingMode.Ignore };
+        card.style.width = width;
+        card.style.height = height;
+        card.style.justifyContent = Justify.Center;
+        card.style.paddingLeft = 13;
+        card.style.paddingRight = 10;
+        card.style.color = new Color(.24f, .14f, .08f);
+        var art = new Image { sprite = Art2D.Region("hud-paper-v1-atlas", region.x, region.y, region.width, region.height),
+            scaleMode = ScaleMode.StretchToFill, pickingMode = PickingMode.Ignore };
+        art.style.position = Position.Absolute;
+        art.style.left = art.style.right = art.style.top = art.style.bottom = 0;
+        card.Add(art);
+        parent.Add(card);
+        return card;
+    }
+
     void ApplySafeArea()
     {
         if (Screen.width == 0 || Screen.height == 0)
@@ -117,8 +196,9 @@ public sealed class WorkshopHud : MonoBehaviour
         var safe = Screen.safeArea;
         float sx = root.resolvedStyle.width / Screen.width;
         float sy = root.resolvedStyle.height / Screen.height;
-        top.style.left = bottom.style.left = 16 + safe.xMin * sx;
-        top.style.right = bottom.style.right = 16 + (Screen.width - safe.xMax) * sx;
+        const float inset = 18;
+        top.style.left = bottom.style.left = inset + safe.xMin * sx;
+        top.style.right = bottom.style.right = inset + (Screen.width - safe.xMax) * sx;
         top.style.top = 12 + (Screen.height - safe.yMax) * sy;
         bottom.style.bottom = 12 + safe.yMin * sy;
     }
@@ -132,16 +212,29 @@ public sealed class WorkshopHud : MonoBehaviour
         return l;
     }
 
+    static void Caption(Label label)
+    {
+        label.style.alignSelf = Align.Center;
+        label.style.maxWidth = Length.Percent(100);
+        label.style.marginTop = 3;
+        label.style.paddingLeft = 11;
+        label.style.paddingRight = 11;
+        label.style.paddingTop = 3;
+        label.style.paddingBottom = 3;
+        label.style.backgroundColor = new Color(.17f, .12f, .085f, .92f);
+        label.style.borderTopLeftRadius = label.style.borderTopRightRadius =
+            label.style.borderBottomLeftRadius = label.style.borderBottomRightRadius = 6;
+    }
+
     Label WorldLabel()
     {
-        var l = Text(root, 15);
+        var l = Text(root, 14);
         l.style.position = Position.Absolute;
-        l.style.width = 100;
+        l.style.width = 86;
         l.style.unityTextAlign = TextAnchor.MiddleCenter;
         l.style.whiteSpace = WhiteSpace.Normal;
-        l.style.backgroundColor = new Color(.08f, .13f, .15f, .88f);
-        l.style.paddingTop = 4;
-        l.style.paddingBottom = 4;
+        Caption(l);
+        l.style.paddingLeft = l.style.paddingRight = 2;
         return l;
     }
 
@@ -153,9 +246,14 @@ public sealed class WorkshopHud : MonoBehaviour
         top.style.display = bottom.style.display = inWorld ? DisplayStyle.Flex : DisplayStyle.None;
         if(tutorial || r.Orders<observedOrders){observedOrders=r.Orders;orderNoticeUntil=0;}
         if(!tutorial && r.Orders>observedOrders){observedOrders=r.Orders;orderNoticeUntil=Time.time+4;}
-        status.text = tutorial ? "交子赶工记 / 机制灰盒    教学 · 不计时" : OrderFeedback.Summary(r);
-        hint.text = tutorial ? TutorialGuide.Instruction(r) : Time.time<orderNoticeUntil ? OrderFeedback.NewOrder(r) : message;
-        players.text = $"P1：{Graybox.PaperName(r.Hands[0])}     |     P2：{Graybox.PaperName(r.Hands[1])}     |     " + message;
+        order.text = tutorial ? "练习做一张交子" : $"第 {r.Orders + 1} 单\n{r.Received}/{r.Required} 张";
+        int seconds = Mathf.CeilToInt(r.Remaining);
+        timer.text = tutorial ? "不计时" : $"{seconds / 60:00}:{seconds % 60:00}";
+        score.text = $"累计 {r.Tickets} 张 · {r.Orders} 单 · {r.Score} 分";
+        hint.text = tutorial ? TutorialGuide.Instruction(r) : Time.time < orderNoticeUntil ? OrderFeedback.NewOrder(r) : message;
+        hint.style.display = string.IsNullOrWhiteSpace(hint.text) ? DisplayStyle.None : DisplayStyle.Flex;
+        for (int i = 0; i < hands.Length; i++)
+            hands[i].text = $"持有 · {Graybox.PaperName(r.Hands[i])}";
         for (int i = 0; i < stations.Length; i++)
         {
             var s = r.Slots[i];
@@ -163,15 +261,28 @@ public sealed class WorkshopHud : MonoBehaviour
             float duration = r.Duration(s);
             if (duration > 0 && s.Progress > 0 && !s.Complete)
                 state += $" {Mathf.Clamp01(s.Progress / duration) * 100:F0}%";
-            stations[i].text = game.layout[i].label + "\n" + state;
+            float progress = duration > 0 && !s.Complete ? Mathf.Clamp01(s.Progress / duration) : 0;
+            stationProgress[i].style.width = Length.Percent(progress * 100);
+            stations[i].style.height = state == "空闲" ? 24 : 44;
             bool guide = tutorial && TutorialGuide.Target(r) == i;
-            if (guide)
-                stations[i].text = "下一步 ↓\n" + stations[i].text;
-            stations[i].style.color = guide ? new Color(1, .87f, .35f) : game.Players[0].Target == i ? new Color(.4f, 1, 1) : game.Players[1].Target == i ? new Color(1, .7f, .4f) : Color.white;
+            stations[i].text = (guide ? "▸ " : "") + game.layout[i].label;
+            if (state != "空闲")
+                stations[i].text += "\n" + state;
+            bool p1 = game.Players[0].Target == i;
+            bool p2 = game.Players[1].Target == i;
+            stations[i].style.backgroundColor = guide ? new Color(1f, .83f, .46f) :
+                p1 && p2 ? new Color(.88f, .74f, .43f) :
+                p1 ? new Color(.70f, .84f, .69f) :
+                p2 ? new Color(.94f, .71f, .58f) : new Color(.98f, .89f, .72f, .96f);
+            stations[i].style.color = new Color(.22f, .12f, .065f);
         }
 
         for (int i = 0; i < 2; i++)
-            actors[i].text = $"P{i + 1} · {Graybox.PaperName(r.Hands[i])}";
+        {
+            actors[i].text = $"P{i + 1}";
+            actors[i].style.width = 34;
+            actors[i].style.backgroundColor = i == 0 ? new Color(.20f, .40f, .28f, .96f) : new Color(.58f, .20f, .14f, .96f);
+        }
         bool menu = r.Phase == RoundPhase.Paused || r.Phase == RoundPhase.Results;
         menu &= game.Flow == null || game.Flow.LegacySmoke;
         overlay.style.display = menu ? DisplayStyle.Flex : DisplayStyle.None;
@@ -205,13 +316,13 @@ public sealed class WorkshopHud : MonoBehaviour
         for (int i = 0; i < stations.Length; i++)
             PositionLabel(stations[i], game.ItemAnchors[i].position + Vector3.up * .5f);
         for (int i = 0; i < actors.Length; i++)
-            PositionLabel(actors[i], game.Players[i].Root.position + Vector3.up * 1.8f);
+            PositionLabel(actors[i], game.Players[i].Root.position + Vector3.up * 1.45f);
     }
 
     void PositionLabel(Label l, Vector3 world)
     {
         var p = game.View.WorldToViewportPoint(world);
-        l.style.left = p.x * root.resolvedStyle.width - 50;
-        l.style.top = (1 - p.y) * root.resolvedStyle.height - 35;
+        l.style.left = p.x * root.resolvedStyle.width - l.style.width.value.value * .5f;
+        l.style.top = (1 - p.y) * root.resolvedStyle.height - 26;
     }
 }

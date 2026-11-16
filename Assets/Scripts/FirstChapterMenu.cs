@@ -14,9 +14,12 @@ public sealed class FirstChapterMenu : MonoBehaviour
     readonly List<Button> buttons = new List<Button>();
     GameScreen last = (GameScreen)(-1);
     TitleScreenView titleScreen;
+    FontDefinition brushFont;
     public void Initialize(Graybox owner)
     {
         game = owner;
+        brushFont = FontDefinition.FromFont(Font.CreateDynamicFontFromOSFont(
+            new[] { "STXingkai", "华文行楷", "KaiTi", "Microsoft YaHei" }, 48));
         root = GetComponent<UIDocument>().rootVisualElement;
         overlay = new VisualElement();
         overlay.style.position = Position.Absolute;
@@ -48,6 +51,7 @@ public sealed class FirstChapterMenu : MonoBehaviour
         card.Add(scroll);
         title = new Label();
         title.style.fontSize = 30;
+        title.style.unityFontDefinition = brushFont;
         title.style.color = new Color(.3f,.18f,.08f);
         scroll.Add(title);
         illustrations=new VisualElement();illustrations.style.flexDirection=FlexDirection.Row;illustrations.style.alignItems=Align.Center;illustrations.style.marginTop=8;scroll.Add(illustrations);
@@ -168,6 +172,16 @@ public sealed class FirstChapterMenu : MonoBehaviour
             return;
         title.text = screen == GameScreen.Title ? "交子赶工记" : screen == GameScreen.Map ? "作坊地图" : screen == GameScreen.Selection ? "双人工匠选择" : screen == GameScreen.Pause ? "作坊已暂停" : screen == GameScreen.Results ? "本轮结算" : screen == GameScreen.Gallery ? "组合交子图鉴" : screen == GameScreen.Settings ? "设置" : "操作说明";
         description.text = Body(screen);
+        bool pause = screen == GameScreen.Pause;
+        bool map = screen == GameScreen.Map;
+        overlay.style.backgroundImage = pause ? new StyleBackground(StyleKeyword.None) :
+            new StyleBackground(Resources.Load<Texture2D>("Art2D/menu-background-v1"));
+        overlay.style.backgroundColor = new Color(.12f, .08f, .05f, pause ? .63f : .95f);
+        overlay.style.alignItems = map ? Align.FlexEnd : Align.Center;
+        card.style.marginRight = map ? 28 : 0;
+        card.style.maxWidth = pause ? 420 : map ? 430 : 760;
+        title.style.unityTextAlign = pause ? TextAnchor.MiddleCenter : TextAnchor.MiddleLeft;
+        if (pause) title.text = "暂停歇歇";
         illustrations.Clear();
         if(screen==GameScreen.Title)illustrations.Add(Art2D.Picture(Art2D.Region("source-00",0,0,1,1),116,116));
         if(screen==GameScreen.Selection){
@@ -205,7 +219,14 @@ public sealed class FirstChapterMenu : MonoBehaviour
         }
 
         for (int i = 0; i < buttons.Count; i++)
-            buttons[i].style.backgroundColor = i == f.Focus ? new Color(.15f, .45f, .45f) : new Color(.2f, .25f, .27f);
+        {
+            var b = buttons[i];
+            bool focused = i == f.Focus;
+            b.style.backgroundColor = focused ? new Color(.55f, .19f, .12f) : new Color(.94f, .84f, .65f);
+            b.style.color = focused ? new Color(1, .94f, .79f) : new Color(.28f, .16f, .08f);
+            b.style.borderTopColor = b.style.borderBottomColor = b.style.borderLeftColor = b.style.borderRightColor =
+                focused ? new Color(.81f, .62f, .32f) : new Color(.65f, .46f, .26f);
+        }
         if (last != screen)
         {
             last = screen;
@@ -220,9 +241,10 @@ public sealed class FirstChapterMenu : MonoBehaviour
             text = text,
             focusable = false
         };
-        b.style.height = 38;
+        b.style.height = 42;
         b.style.marginTop = 5;
-        b.style.fontSize = 18;
+        b.style.fontSize = 22;
+        b.style.unityFontDefinition = brushFont;
         b.style.color = Color.white;
         actions.Add(b);
         buttons.Add(b);

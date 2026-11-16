@@ -78,6 +78,7 @@ public class Graybox : MonoBehaviour
     public Transform[] ItemAnchors { get; private set; }
 
     Renderer[] surfaces;
+    bool modeledWorkshop;
     Transform[] operations, paperViews;
     WorkshopHud hud;
     StreamWriter log;
@@ -152,6 +153,7 @@ public class Graybox : MonoBehaviour
         Flow = gameObject.AddComponent<GameFlow>();
         Flow.Initialize(this);
         gameObject.AddComponent<FirstChapterMenu>().Initialize(this);
+        ApplyArtisans(Flow.Selected);
         Rules.Reset(true);
         Refresh();
     }
@@ -182,6 +184,27 @@ public class Graybox : MonoBehaviour
         light.intensity = 1.3f;
         light.transform.rotation = Quaternion.Euler(55, -25, 0);
         RenderSettings.ambientLight = Color.gray;
+        var environment = Array.IndexOf(Environment.GetCommandLineArgs(), "--jiaozi-smoke") < 0
+            ? Resources.Load<GameObject>("WorkshopModels/Workshop") : null;
+        var art = environment != null ? Instantiate(environment, new Vector3(-6, 0, -4), Quaternion.Euler(0, 180, 0), transform) : null;
+        modeledWorkshop = art != null;
+        if (modeledWorkshop)
+        {
+            light.intensity = .80f;
+            light.color = new Color(1f, .96f, .90f);
+            light.transform.rotation = Quaternion.Euler(58, -32, 0);
+            light.shadows = LightShadows.Soft;
+            light.shadowStrength = .72f;
+            light.shadowBias = .18f;
+            light.shadowNormalBias = .22f;
+            RenderSettings.sun = light;
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(.31f, .34f, .37f);
+            // Keep the camera on the centerline so the floor grid stays square to the screen.
+            View.transform.position = new Vector3(0, 10.8f, -12.5f);
+            View.transform.LookAt(new Vector3(0, 0, .45f));
+        }
+        var boundaryStart = transform.childCount;
         Box("12x8 地面", new Vector3(0, -.16f, 0), new Vector3(12.4f, .3f, 8.4f), new Color(.61f, .59f, .51f));
         Box("纸院", new Vector3(-3, .001f, 0), new Vector3(5.9f, .01f, 7.9f), new Color(.62f, .66f, .57f), false);
         Box("印坊", new Vector3(3, .001f, 0), new Vector3(5.9f, .01f, 7.9f), new Color(.69f, .61f, .5f), false);
@@ -195,17 +218,31 @@ public class Graybox : MonoBehaviour
 
         )
             Box("侧墙", new Vector3(x, .4f, 0), new Vector3(.2f, .8f, 8.4f), Color.gray);
-        foreach (var p in partitionPositions)
-            Box("可调整隔断", p, new Vector3(.18f, 1, 3), new Color(.38f, .4f, .38f));
+        if (modeledWorkshop)
+        {
+            for (int i = boundaryStart; i < transform.childCount; i++)
+                transform.GetChild(i).GetComponent<Renderer>().enabled = false;
+            foreach (var node in art.GetComponentsInChildren<Transform>(true))
+            {
+                if (!node.name.Contains("__Collider_")) continue;
+                node.gameObject.AddComponent<BoxCollider>().size = Vector3.one * 2;
+                foreach (var renderer in node.GetComponentsInChildren<Renderer>())
+                    renderer.enabled = false;
+            }
+        }
+        else
+            foreach (var p in partitionPositions)
+                Box("可调整隔断", p, new Vector3(.18f, 1, 3), new Color(.38f, .4f, .38f));
         surfaces = new Renderer[layout.Length];
         operations = new Transform[layout.Length];
         ItemAnchors = new Transform[layout.Length];
         paperViews = new Transform[layout.Length];
+        var stationNames = new[] { "pulp", "dry", "dry", "print", "stamp", "shared", "delivery" };
         for (int i = 0; i < layout.Length; i++)
         {
             var l = layout[i];
-            surfaces[i] = Box(l.label, l.position + Vector3.up * .45f, new Vector3(l.size.x, .9f, l.size.z), new Color(.35f, .37f, .35f)).GetComponent<Renderer>();
-            if (l.visualPrefab != null)
+            if (!modeledWorkshop) surfaces[i] = Box(l.label, l.position + Vector3.up * .45f, new Vector3(l.size.x, .9f, l.size.z), new Color(.35f, .37f, .35f)).GetComponent<Renderer>();
+            if (!modeledWorkshop && l.visualPrefab != null)
                 Instantiate(l.visualPrefab, l.position, Quaternion.identity, transform);
             var op = new GameObject(l.label + "操作点");
             op.transform.SetParent(transform);
@@ -214,8 +251,18 @@ public class Graybox : MonoBehaviour
             var a = new GameObject(l.label + "物件锚点");
             a.transform.SetParent(transform);
             a.transform.position = l.position + Vector3.up;
+            if (modeledWorkshop)
+            {
+                string prefix = "station_" + stationNames[i] + "__";
+                string suffix = i == 1 ? "A" : i == 2 ? "B" : "main";
+                var target = FindModelNode(art.transform, prefix + "interaction_" + suffix);
+                var slot = FindModelNode(art.transform, prefix + "slot_" + (suffix == "main" ? "0" : suffix));
+                if (target == null) throw new InvalidOperationException("Missing model interaction point: " + prefix + suffix);
+                op.transform.position = new Vector3(target.position.x, 0, target.position.z);
+                a.transform.position = slot != null ? slot.position : target.position;
+            }
             ItemAnchors[i] = a.transform;
-            paperViews[i] = Box("纸张", a.transform.position, new Vector3(.65f, .08f, .42f), Color.white, false).transform;
+            paperViews[i] = Box("纸张", a.transform.position, new Vector3(.60f, .018f, .42f), Color.white, false).transform;
         }
 
         for (int i = 0; i < 2; i++)
@@ -237,7 +284,7 @@ public class Graybox : MonoBehaviour
             body.GetComponent<Renderer>().sharedMaterial = Mat(i == 0 ? new Color(.1f, .62f, .67f) : new Color(.87f, .38f, .2f));
             var marker = Box("朝向", root.transform.position + new Vector3(0, .1f, .55f), new Vector3(.15f, .08f, .35f), Color.white, false).transform;
             marker.SetParent(root.transform, true);
-            var cargo = Box("手持锚点", root.transform.position + new Vector3(0, .85f, .5f), new Vector3(.65f, .08f, .42f), Color.white, false).transform;
+            var cargo = Box("手持锚点", root.transform.position + new Vector3(0, .85f, .5f), new Vector3(.60f, .018f, .42f), Color.white, false).transform;
             cargo.SetParent(root.transform, true);
             Players[i] = new Actor
             {
@@ -425,7 +472,7 @@ public class Graybox : MonoBehaviour
         for (int i = 0; i < surfaces.Length; i++)
         {
             bool p1 = Players[0].Target == i, p2 = Players[1].Target == i;
-            surfaces[i].material.color = p1 && p2 ? new Color(.85f, .78f, .32f) : p1 ? new Color(.15f, .65f, .7f) : p2 ? new Color(.9f, .45f, .25f) : new Color(.35f, .37f, .35f);
+            if (surfaces[i] != null) surfaces[i].material.color = p1 && p2 ? new Color(.85f, .78f, .32f) : p1 ? new Color(.15f, .65f, .7f) : p2 ? new Color(.9f, .45f, .25f) : new Color(.35f, .37f, .35f);
             var item = Rules.Slots[i].Item;
             paperViews[i].gameObject.SetActive(item != null);
             if (item != null)
@@ -443,6 +490,13 @@ public class Graybox : MonoBehaviour
         hud?.Refresh(message);
     }
 
+    internal static Transform FindModelNode(Transform root, string nodeName)
+    {
+        foreach (var node in root.GetComponentsInChildren<Transform>(true))
+            if (node.name == nodeName) return node;
+        return null;
+    }
+
     public void ApplyArtisans(int[] selected)
     {
         for (int i = 0; i < 2; i++)
@@ -452,8 +506,11 @@ public class Graybox : MonoBehaviour
             if (actor.Visual != null)
                 Destroy(actor.Visual);
             GameObject visual;
-            if (definition.visualPrefab != null)
-                visual = Instantiate(definition.visualPrefab, actor.Root);
+            var prefab = definition.visualPrefab;
+            if (prefab == null && modeledWorkshop)
+                prefab = Resources.Load<GameObject>("WorkshopModels/" + (selected[i] == 0 ? "Zhituan" : "Yintao"));
+            if (prefab != null)
+                visual = Instantiate(prefab, actor.Root);
             else
             {
                 visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -502,7 +559,7 @@ public class Graybox : MonoBehaviour
         {
             var p = Players[i];
             p.Controller.enabled = false;
-            p.Root.position = chapter.spawnPoints[i];
+            p.Root.position = modeledWorkshop ? new Vector3(i == 0 ? -3.5f : 2.5f, 0, 0) : chapter.spawnPoints[i];
             p.Root.rotation = Quaternion.identity;
             p.Facing = Vector3.forward;
             p.Target = -1;

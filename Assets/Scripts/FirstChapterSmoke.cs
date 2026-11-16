@@ -17,7 +17,7 @@ public sealed class FirstChapterSmoke : MonoBehaviour
     static void Install()
     {
         var a = Environment.GetCommandLineArgs();
-        if (Array.IndexOf(a, "--jiaozi-flow-smoke") >= 0 || Array.IndexOf(a, "--jiaozi-flow-reload") >= 0)
+        if (Array.IndexOf(a, "--jiaozi-flow-smoke") >= 0 || Array.IndexOf(a, "--jiaozi-flow-reload") >= 0 || Array.IndexOf(a, "--jiaozi-art-preview") >= 0)
             new GameObject("First chapter smoke").AddComponent<FirstChapterSmoke>();
     }
 
@@ -74,6 +74,27 @@ public sealed class FirstChapterSmoke : MonoBehaviour
         flow = game.Flow;
         output = Path.Combine(Application.persistentDataPath, "FirstChapterQA");
         Directory.CreateDirectory(output);
+        if (Array.IndexOf(Environment.GetCommandLineArgs(), "--jiaozi-art-preview") >= 0)
+        {
+            flow.BeginPlay(true);
+            yield return Shot("workshop-straight-720", 1280, 720);
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "--jiaozi-camera-comparison") >= 0)
+            {
+                var cameraTransform = game.View.transform;
+                var center = new Vector3(0, 0, .45f);
+                float distance = Vector3.Distance(center, cameraTransform.position);
+                yield return Shot("camera-v00-current", 1280, 720);
+                foreach (int angle in new[] { 40, 45 })
+                {
+                    float radians = angle * Mathf.Deg2Rad;
+                    cameraTransform.position = center + new Vector3(0, Mathf.Sin(radians), -Mathf.Cos(radians)) * distance;
+                    cameraTransform.LookAt(center);
+                    yield return Shot($"camera-v{(angle == 40 ? "01" : "02")}-{angle}deg", 1280, 720);
+                }
+            }
+            Finish();
+            yield break;
+        }
         if (Array.IndexOf(Environment.GetCommandLineArgs(), "--jiaozi-flow-reload") >= 0)
         {
             Check(flow.Screen == GameScreen.Title, "reload starts at title");
@@ -137,6 +158,12 @@ public sealed class FirstChapterSmoke : MonoBehaviour
         yield return Press(Key.F);
         yield return Press(Key.Slash);
         Check(flow.Screen == GameScreen.Playing && game.Rules.Phase == RoundPhase.Tutorial, "both players confirm to tutorial");
+        Check(game.Players[0].Visual.GetComponentInChildren<SkinnedMeshRenderer>() != null &&
+              game.Players[1].Visual.GetComponentInChildren<SkinnedMeshRenderer>() != null,
+              "both imported character meshes are present");
+        Check(game.ItemAnchors[0].position.y > .25f && game.ItemAnchors[0].position.y < .50f &&
+              game.ItemAnchors[1].position != game.ItemAnchors[2].position,
+              "imported station and drying anchors are active");
         yield return Shot("tutorial-720", 1280, 720);
         MakeTicket();
         Check(game.Rules.TutorialDelivered, "tutorial complete");
