@@ -202,7 +202,7 @@ public class Graybox : MonoBehaviour
             RenderSettings.ambientLight = new Color(.31f, .34f, .37f);
             // Keep the camera on the centerline so the floor grid stays square to the screen.
             View.transform.position = new Vector3(0, 10.8f, -12.5f);
-            View.transform.LookAt(new Vector3(0, 0, .45f));
+            View.transform.LookAt(new Vector3(0, 0, .2f));
         }
         var boundaryStart = transform.childCount;
         Box("12x8 地面", new Vector3(0, -.16f, 0), new Vector3(12.4f, .3f, 8.4f), new Color(.61f, .59f, .51f));
@@ -304,7 +304,9 @@ public class Graybox : MonoBehaviour
         {
             width = Screen.width;
             height = Screen.height;
-            View.orthographicSize = Mathf.Max(5.9f, 7.2f / View.aspect);
+            View.orthographicSize = modeledWorkshop
+                ? Mathf.Max(4.45f, 6.65f / View.aspect)
+                : Mathf.Max(5.9f, 7.2f / View.aspect);
         }
 
         hud.PositionLabels();
